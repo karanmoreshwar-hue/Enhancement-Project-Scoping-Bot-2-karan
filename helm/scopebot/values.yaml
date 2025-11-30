@@ -1,0 +1,115 @@
+# Scopebot Umbrella Chart Values
+# This file contains configuration for all subcharts
+# Values are pre-filled from your .env file
+
+# Global configuration
+global:
+  namespace: scopebot
+
+# Frontend subchart configuration
+frontend:
+  replicaCount: 1
+  image:
+    repository: scopebot-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+
+# Backend subchart configuration
+backend:
+  replicaCount: 1
+  image:
+    repository: scopebot-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8000
+
+  # Non-sensitive environment variables
+  env:
+    ANONYMIZED_TELEMETRY: "False"
+    USE_GEMINI: "false"
+    FRONTEND_URL: "http://scopebot-frontend"
+    VECTOR_DIM: "4096"
+    QDRANT_HOST: "scopebot-qdrant"
+    QDRANT_PORT: "6333"
+    QDRANT_COLLECTION: "knowledge_chunks"
+
+  # Sensitive environment variables
+  # These values are from your .env file
+  # REPLACE empty values with your actual credentials before deploying!
+  secrets:
+    # Gemini API (optional - you're using Azure, so these can stay empty)
+    GEMINI_API_KEY: ""  # Leave empty if using Azure
+    GEMINI_MODEL: "gemini-2.0-flash"
+
+    # Jina Embeddings (optional if using Azure embeddings)
+    JINA_API_KEY: ""  # REPLACE: Add your Jina API key if you use it
+    JINA_MODEL: "jina-embeddings-v2-base-en"
+
+    # Database Configuration - REQUIRED
+    POSTGRES_DB: "scopebot_db"
+    POSTGRES_USER: "scopebot"
+    POSTGRES_PASSWORD: "password"  # CHANGE THIS in production!
+    DATABASE_URL: "postgresql+asyncpg://scopebot:password@scopebot-postgres:5432/scopebot_db"
+
+    # Authentication - REQUIRED
+    SECRET_KEY: "super-secret-key-change-this"  # CHANGE THIS in production!
+    ALGORITHM: "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: "1440"  # 1 day
+    REFRESH_TOKEN_EXPIRE_DAYS: "7"
+
+    # Email Configuration (SMTP for OTP Reset)
+    SMTP_HOST: "smtp.gmail.com"
+    SMTP_PORT: "587"
+    SMTP_USER: "bhavani.sm@sigmoidanalytics.com"  # REPLACE: your email address
+    SMTP_PASS: "nttuqhwphofkxacw"  # REPLACE: your Gmail app password
+
+    # Ollama Configuration
+    OLLAMA_HOST: "http://172.190.86.69:11434"  # Leave empty or add your Ollama host
+    OLLAMA_MODEL: "deepseek-r1:latest"
+    OLLAMA_EMBED_MODEL: "qwen3-embedding:latest"
+
+    # Azure Storage
+    AZURE_STORAGE_ACCOUNT: "scopebot"
+    AZURE_STORAGE_KEY: "za2pfLEOqo3WpVvbDuNTbm/wix8dhmdIQWWT98ScTN26YkVxp2oE03fFjF6gfEku/zJYuK8lPLAi+AStAkB3JA=="
+    AZURE_STORAGE_CONTAINER: "botcontainer"
+
+  volumes:
+    localStoragePath: "./local_storage"
+    knowledgeBasePath: "./knowledgebase_base/docs"
+    chromaPersistDir: "./chroma_db"
+
+# PostgreSQL subchart configuration
+postgres:
+  replicaCount: 1
+  image:
+    repository: postgres
+    tag: "15-alpine"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 5432
+  postgres:
+    database: "scopebot_db"  # Must match POSTGRES_DB above
+    user: "scopebot"
+    password: "password"  # Must match POSTGRES_PASSWORD above - CHANGE in production!
+  persistence:
+    enabled: false  # Set to true for production with PVC
+
+# Qdrant subchart configuration
+qdrant:
+  replicaCount: 1
+  image:
+    repository: qdrant/qdrant
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 6333
+    grpcPort: 6334
+  persistence:
+    enabled: false  # Set to true for production with PVC
