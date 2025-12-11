@@ -10,7 +10,7 @@ global:
 frontend:
   replicaCount: 1
   image:
-    repository: scopebot-frontend
+    repository: scopingbotacr.azurecr.io/scopebot-frontend
     tag: latest
     pullPolicy: IfNotPresent
   imagePullSecrets:
